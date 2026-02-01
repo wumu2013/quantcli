@@ -1,0 +1,5 @@
+name: 10日线斜率因子
+type: technical
+expr: "(ma(close, 10) - delay(ma(close, 10), 5)) / delay(ma(close, 10), 5)"
+direction: positive
+description: 10日线5日斜率，越陡峭越好

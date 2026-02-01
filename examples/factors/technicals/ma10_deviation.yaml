@@ -1,0 +1,5 @@
+name: 10日线偏离度因子
+type: technical
+expr: "(close - ma(close, 10)) / ma(close, 10)"
+direction: negative
+description: 回调到10日线附近加分（负值表示在均线下方）

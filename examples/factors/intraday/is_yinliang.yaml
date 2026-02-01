@@ -1,0 +1,5 @@
+name: 阴线因子
+type: intraday
+expr: "where(close < open, 1, 0)"
+direction: positive
+description: 分钟K线收阴线返回1，收阳线返回0

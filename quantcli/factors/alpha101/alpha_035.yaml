@@ -1,0 +1,6 @@
+name: ALPHA_035 资金流入因子
+type: technical
+expr: "ts_rank(where(close > open, volume, 0), 10)"
+direction: positive
+category: flow
+description: "资金流入"

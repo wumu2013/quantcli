@@ -1,0 +1,6 @@
+name: ALPHA_004 资金流向因子
+type: technical
+expr: "signed_power(where(close < open, volume, -volume), 2)"
+direction: positive
+category: flow
+description: "资金净流入"

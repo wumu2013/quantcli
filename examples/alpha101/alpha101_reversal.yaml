@@ -1,0 +1,28 @@
+name: Alpha101 反转策略
+version: 1.0.0
+description: 基于Alpha101反转类因子的均值回归策略
+
+screening:
+  conditions:
+    - "close > 5"
+  limit: 500
+
+# 因子配置
+factors:
+  - alpha/alpha_001.yaml
+  - alpha/alpha_002.yaml
+  - alpha/alpha_010.yaml
+
+ranking:
+  weights:
+    alpha/alpha_001.yaml: 0.35   # 经典反转
+    alpha/alpha_002.yaml: 0.25   # 量价变化
+    alpha/alpha_010.yaml: 0.40   # 均价偏离
+  normalize: zscore
+  conditions:
+    - "alpha_002 > 0"            # 阴线（可能有反弹）
+    - "alpha_010 < 0"            # 短期偏离为负
+
+output:
+  columns: [symbol, score, rank, alpha_001, alpha_002, alpha_010]
+  limit: 30

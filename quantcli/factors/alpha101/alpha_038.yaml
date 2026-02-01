@@ -1,0 +1,6 @@
+name: ALPHA_038 MACD信号因子
+type: technical
+expr: "ts_rank(ema(close, 12) - ema(close, 26), 10)"
+direction: positive
+category: momentum
+description: "MACD值"

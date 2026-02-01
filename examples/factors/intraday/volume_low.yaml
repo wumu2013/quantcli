@@ -1,0 +1,5 @@
+name: 缩量因子
+type: intraday
+expr: "where(volume < ma(volume, 5) * 0.8, 1, 0)"
+direction: positive
+description: 成交量小于5日均量的80%时返回1

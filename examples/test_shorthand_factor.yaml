@@ -1,0 +1,23 @@
+name: 简写因子格式测试
+version: 1.0.0
+
+screening:
+  fundamental_conditions:
+    - "roe > 0.1"
+  daily_conditions:
+    - "close > 5"
+  limit: 100
+
+# 使用简写格式 alpha101/alpha_xxx (不需要 .yaml 后缀)
+factors:
+  - alpha101/alpha_001    # 反转因子
+  - alpha101/alpha_009    # 动量因子
+
+ranking:
+  weights:
+    alpha101/alpha_001: 0.6
+    alpha101/alpha_009: 0.4
+  normalize: zscore
+
+output:
+  limit: 30

@@ -1,0 +1,5 @@
+name: 5日内放量因子
+type: technical
+expr: "max(where(volume > ma(volume, 5) * 1.2, close > open, 0))"
+direction: positive
+description: 5日内有放量阳线加分

@@ -1,0 +1,5 @@
+name: 净利润率因子
+type: fundamental
+expr: "net_profit_margin"
+direction: positive
+description: 净利润率越高越好

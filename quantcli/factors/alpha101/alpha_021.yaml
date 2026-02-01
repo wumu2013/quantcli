@@ -1,0 +1,6 @@
+name: ALPHA_021 成交量加权均价因子
+type: technical
+expr: "ts_rank(ts_ave(close * volume, 10) / ts_ave(volume, 10), 20)"
+direction: positive
+category: price
+description: "成交量加权价格"

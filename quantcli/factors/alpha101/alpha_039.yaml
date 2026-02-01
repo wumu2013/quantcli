@@ -1,0 +1,6 @@
+name: ALPHA_039 量价齐升因子
+type: technical
+expr: "ts_rank(close / delay(close, 5), 10) * ts_rank(volume / delay(volume, 5), 10)"
+direction: positive
+category: momentum
+description: "量价齐升"

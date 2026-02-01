@@ -1,0 +1,6 @@
+name: ALPHA_018 短期反转因子
+type: technical
+expr: "ts_rank(delay(close, 5), 50) - ts_rank(close, 50)"
+direction: positive
+category: reversal
+description: "短期反转"

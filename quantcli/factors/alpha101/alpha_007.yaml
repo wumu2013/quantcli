@@ -1,0 +1,6 @@
+name: ALPHA_007 量价稳定性因子
+type: technical
+expr: "where(ts_rank(volume / ts_max(volume, 5), 5) < ts_rank(close / ts_max(close, 10), 10), -1, 1)"
+direction: positive
+category: volatility
+description: "量价配合"

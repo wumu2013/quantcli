@@ -1,0 +1,6 @@
+name: ALPHA_022 量价相关性因子
+type: technical
+expr: "ts_rank(correlation(close, volume, 10), 20) - ts_rank(correlation(close, volume, 50), 20)"
+direction: positive
+category: volume
+description: "短期量价关系"

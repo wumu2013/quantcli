@@ -1,0 +1,6 @@
+name: ALPHA_034 价格波动率因子
+type: technical
+expr: "ts_rank((high - low) / ma(close, 10), 20)"
+direction: negative
+category: volatility
+description: "低波动率"

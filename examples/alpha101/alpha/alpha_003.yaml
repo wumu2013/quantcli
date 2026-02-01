@@ -1,0 +1,6 @@
+name: ALPHA_003 低波动率因子
+type: technical
+expr: "ts_rank(ts_decayexp(close, 7), 10) - ts_rank(ts_decayexp(close, 20), 30)"
+direction: positive
+category: volatility
+description: "低波动稳定"

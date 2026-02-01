@@ -1,0 +1,6 @@
+name: ALPHA_014 价格位置因子
+type: technical
+expr: "ts_rank(close / ts_max(close, 20), 5)"
+direction: positive
+category: trend
+description: "接近周期高点"

@@ -1,0 +1,6 @@
+name: ALPHA_032 趋势强度因子
+type: technical
+expr: "ts_rank(close - ma(close, 20), 20) / ts_rank(ts_std(close, 20), 20)"
+direction: positive
+category: trend
+description: "趋势强度"

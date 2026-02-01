@@ -1,0 +1,6 @@
+name: ALPHA_036 RSI超卖因子
+type: technical
+expr: "where(rsi(close, 14) < 30, 1, 0) * ts_rank(volume / ts_ave(volume, 20), 5)"
+direction: positive
+category: reversal
+description: "RSI超卖"

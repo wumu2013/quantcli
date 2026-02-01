@@ -1,0 +1,6 @@
+name: ALPHA_020 均线偏离因子
+type: technical
+expr: "(close - ma(close, 20)) / ma(close, 20) - (close - ma(close, 5)) / ma(close, 5)"
+direction: positive
+category: mean_reversion
+description: "短期偏离收敛"

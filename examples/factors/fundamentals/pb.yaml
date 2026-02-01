@@ -1,0 +1,5 @@
+name: 市净率因子
+type: fundamental
+expr: "pb"
+direction: negative
+description: PB 越低越好

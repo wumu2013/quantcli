@@ -1,0 +1,6 @@
+name: ALPHA_040 强势整理因子
+type: technical
+expr: "where(close > ma(close, 10), 1, 0) * where(ts_std(close, 5) < ts_std(close, 20), 1, 0)"
+direction: positive
+category: trend
+description: "强势整理"

@@ -1,0 +1,50 @@
+name: 周期股均值回归策略
+version: 1.0.0
+description: 选取低估值周期股，复苏期介入，繁荣期离场
+
+screening:
+  fundamental_conditions:
+    - "pe_ttm < 20"                   # 低估值
+    - "pb < 2"                        # 破净或低市净率
+    - "netprofit_margin > 0.05"       # 周期股盈利恢复
+    - "market_cap > 50000"            # 市值 > 50亿
+
+# 因子配置
+factors:
+  - name: alpha_001                 # 反转因子
+    expr: "rank(ts_argmax(where(close == delay(close, 1), 0, close), 20)) - 0.5"
+    direction: positive
+    description: "前期超跌反弹"
+
+  - name: alpha_002                 # 阴线放量反转因子
+    expr: "where(close < open, volume, -volume) / (ts_ave(volume, 20) + 1)"
+    direction: positive
+    description: "下跌放量见底"
+
+  - name: alpha_010                 # 均价偏离反转因子
+    expr: "close - ts_ave(close, 20)"
+    direction: positive
+    description: "偏离均线修复"
+
+ranking:
+  weights:
+    alpha_001: 0.4                    # 反转信号
+    alpha_002: 0.3                    # 量能见底
+    alpha_010: 0.3                    # 均值回归
+  conditions: []
+  bonuses: []
+  normalize: zscore
+
+output:
+  limit: 20
+
+backtest:
+  entry:
+    price: open_next
+  exit:
+    - rule: timed
+      hold_days: 15
+      time: "10:00"
+    - rule: close                     # 周期股收盘卖出
+  capital: 1000000
+  fee: 0.0003

@@ -1,0 +1,5 @@
+name: 市盈率因子
+type: fundamental
+expr: "pe"
+direction: negative
+description: PE 越低越好

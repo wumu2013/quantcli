@@ -1,0 +1,5 @@
+name: 5日内涨停因子
+type: technical
+expr: "rolling_max(close, 5) / delay(close, 1) - 1"
+direction: positive
+description: 5日内最大涨幅，有涨停加分

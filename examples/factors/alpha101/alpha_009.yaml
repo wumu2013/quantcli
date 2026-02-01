@@ -1,0 +1,6 @@
+name: ALPHA_009 12月动量因子
+type: technical
+expr: "ts_sum(close, 240) / ts_sum(ts_ave(close, 20), 12) - 1"
+direction: positive
+category: momentum
+description: "长期动量"

@@ -1,0 +1,6 @@
+name: ALPHA_037 布林带突破因子
+type: technical
+expr: "where(close > ma(close, 20) + 2 * ts_std(close, 20), 1, 0)"
+direction: positive
+category: trend
+description: "布林带上轨突破"

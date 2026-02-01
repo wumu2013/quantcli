@@ -1,0 +1,6 @@
+name: ALPHA_001 经典反转因子
+type: technical
+expr: "rank(ts_argmax(where(close == delay(close, 1), 0, close), 20)) - 0.5"
+direction: positive
+category: reversal
+description: "20日创新高后转跌"

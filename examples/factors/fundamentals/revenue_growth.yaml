@@ -1,0 +1,5 @@
+name: 营收增速因子
+type: fundamental
+expr: "revenue_growth"
+direction: positive
+description: 营收增速越高越好

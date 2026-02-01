@@ -1,0 +1,6 @@
+name: ALPHA_006 收盘价位置因子
+type: technical
+expr: "where(close == ts_min(close, 5), close, ts_rank(close, 5))"
+direction: positive
+category: momentum
+description: "收盘在高位"

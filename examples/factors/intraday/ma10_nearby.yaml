@@ -1,0 +1,5 @@
+name: 10日线附近因子
+type: intraday
+expr: "1 - abs(close - ma(close, 10)) / ma(close, 10)"
+direction: positive
+description: 距离10日线越近值越大，越远值越小

@@ -1,0 +1,5 @@
+name: 20日动量因子
+type: technical
+expr: "(close / delay(close, 20)) - 1"
+direction: positive
+description: 20日累计涨幅

@@ -1,0 +1,53 @@
+name: 成长股高增长策略
+version: 1.0.0
+description: 选取高营收增长、高利润改善的成长型股票
+
+screening:
+  fundamental_conditions:
+    - "revenue_growth_yoy > 0.2"      # 营收增速 > 20%
+    - "netprofit_growth_yoy > 0.3"    #利润增速 > 30%
+    - "grossprofit_margin > 0.25"     # 毛利率 > 25%
+    - "roe > 0.12"                    # ROE > 12%
+    - "pe_ttm > 20"                   # 接受合理高估值
+    - "pe_ttm < 80"                   # 避免极端高估
+
+# 因子配置
+factors:
+  - name: alpha_005                 # 均线偏离趋势因子
+    expr: "ts_rank(close - ts_ave(close, 5), 5) - ts_rank(ts_decayexp(-close, 10), 20)"
+    direction: positive
+    description: "趋势向上"
+
+  - name: alpha_006                 # 收盘价位置因子
+    expr: "where(close == ts_min(close, 5), close, ts_rank(close, 5))"
+    direction: positive
+    description: "价格强度"
+
+  - name: alpha_009                 # 12月动量因子
+    expr: "ts_sum(close, 240) / ts_sum(ts_ave(close, 20), 12) - 1"
+    direction: positive
+    description: "长期动量"
+
+ranking:
+  weights:
+    alpha_005: 0.4                    # 短期趋势
+    alpha_006: 0.3                    # 价格强度
+    alpha_009: 0.3                    # 长期动量
+  conditions: []
+  bonuses: []
+  normalize: zscore
+
+output:
+  limit: 20
+
+backtest:
+  entry:
+    price: open_next
+  exit:
+    - rule: timed
+      hold_days: 10                   # 成长股波动大，持有期较短
+      time: "10:00"
+    - rule: stop
+      loss_pct: 15                    # 止损线
+  capital: 1000000
+  fee: 0.0003

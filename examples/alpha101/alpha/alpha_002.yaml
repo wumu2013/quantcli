@@ -1,0 +1,6 @@
+name: ALPHA_002 阴线放量反转因子
+type: technical
+expr: "where(close < open, volume, -volume) / (ma(volume, 20) + 1)"
+direction: positive
+category: reversal
+description: "下跌放量见底"

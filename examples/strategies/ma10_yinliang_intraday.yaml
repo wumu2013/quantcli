@@ -1,0 +1,38 @@
+name: 10日线阴线回调策略
+version: 1.0.0
+description: 基于资深交易者实战验证的日内交易方法
+
+screening:
+  fundamental_conditions:
+    - "roe > 0.1"
+    - "netprofitmargin > 0.05"
+    - "grossprofitmargin > 0.3"
+  daily_conditions:
+    - "ma10_deviation > 0"  # 价格在10日线上方
+    - "limit_up_5d > 0.09"  # 5日内有涨停
+  limit: 100
+
+# 因子配置
+factors:
+  # 日线因子
+  - factors/technicals/ma10_deviation.yaml
+  - factors/technicals/limit_up_5d.yaml
+  - factors/technicals/volume_spike_5d.yaml
+  # 分钟因子
+  - factors/intraday/is_yinliang.yaml
+  - factors/intraday/ma10_nearby.yaml
+
+ranking:
+  weights:
+    factors/technicals/ma10_deviation.yaml: 0.20
+    factors/technicals/limit_up_5d.yaml: 0.20
+    factors/technicals/volume_spike_5d.yaml: 0.15
+    factors/intraday/is_yinliang.yaml: 0.30
+    factors/intraday/ma10_nearby.yaml: 0.15
+  normalize: zscore
+
+output:
+  columns: [symbol, score, is_yinliang, ma10_deviation, limit_up_5d]
+  sort_by: score
+  ascending: false
+  limit: 30

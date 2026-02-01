@@ -1,0 +1,5 @@
+name: 量比因子
+type: technical
+expr: "volume / ma(volume, 5)"
+direction: negative
+description: 量比越低表示相对缩量

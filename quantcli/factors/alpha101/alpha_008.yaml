@@ -1,0 +1,6 @@
+name: ALPHA_008 资金净流入因子
+type: technical
+expr: "where(close < open, volume, -volume)"
+direction: positive
+category: flow
+description: "资金流入"

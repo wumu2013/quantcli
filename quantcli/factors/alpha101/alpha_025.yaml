@@ -1,0 +1,6 @@
+name: ALPHA_025 资金流向因子
+type: technical
+expr: "ts_sum(where(close > delay(close, 1), volume, -volume), 20) / ts_sum(volume, 20)"
+direction: positive
+category: flow
+description: "20日资金流向"

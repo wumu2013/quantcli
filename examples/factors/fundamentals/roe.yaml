@@ -1,0 +1,5 @@
+name: 净资产收益率因子
+type: fundamental
+expr: "roe"
+direction: positive
+description: ROE 越高越好

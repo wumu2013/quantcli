@@ -1,0 +1,6 @@
+name: ALPHA_029 价格动量因子
+type: technical
+expr: "ts_rank((close - delay(close, 5)) / delay(close, 5), 20)"
+direction: positive
+category: momentum
+description: "5日价格动量"

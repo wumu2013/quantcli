@@ -1,0 +1,6 @@
+name: ALPHA_015 成交量趋势因子
+type: technical
+expr: "ts_rank(volume / ts_ave(volume, 20), 10) - ts_rank(close / ts_ave(close, 20), 10)"
+direction: positive
+category: volume
+description: "放量上涨"

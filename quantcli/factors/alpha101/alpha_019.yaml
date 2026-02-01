@@ -1,0 +1,6 @@
+name: ALPHA_019 成交量动量因子
+type: technical
+expr: "ts_sum(volume * sign(close - delay(close, 1)), 10) / ts_sum(volume, 10)"
+direction: positive
+category: momentum
+description: "资金净流入"

@@ -1,0 +1,30 @@
+name: PE+ROE+MA10 价值回归策略
+version: 1.0.0
+description: 基本面筛选 + 技术面权重排序
+
+# 阶段1: 筛选（简单表达式）
+screening:
+  conditions:
+    - "roe > 0.10"           # ROE > 10% (小数格式)
+    - "netprofitmargin > 0.05"  # 净利润率 > 5%
+  limit: 200
+
+# 因子配置（支持内联定义和外部引用）
+factors:
+  - factors/fundamentals/roe.yaml
+  - factors/fundamentals/netprofitmargin.yaml
+  - factors/technicals/ma10_deviation.yaml
+  - factors/technicals/momentum_20d.yaml
+
+# 阶段2: 权重排序
+ranking:
+  weights:
+    factors/fundamentals/roe.yaml: 0.30
+    factors/fundamentals/netprofitmargin.yaml: 0.20
+    factors/technicals/ma10_deviation.yaml: 0.30
+    factors/technicals/momentum_20d.yaml: 0.20
+  normalize: zscore
+
+output:
+  columns: [symbol, score, rank, roe, netprofitmargin, ma10_deviation]
+  limit: 30

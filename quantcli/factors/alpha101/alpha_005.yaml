@@ -1,0 +1,6 @@
+name: ALPHA_005 均线偏离趋势因子
+type: technical
+expr: "ts_rank(close - ts_ave(close, 5), 5) - ts_rank(ts_decayexp(-close, 10), 20)"
+direction: positive
+category: trend
+description: "趋势向上"

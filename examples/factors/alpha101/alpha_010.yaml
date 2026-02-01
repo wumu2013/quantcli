@@ -1,0 +1,6 @@
+name: ALPHA_010 均价偏离因子
+type: technical
+expr: "close - ts_ave(close, 20)"
+direction: positive
+category: reversal
+description: "偏离均线修复"

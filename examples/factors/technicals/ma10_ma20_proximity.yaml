@@ -1,0 +1,5 @@
+name: 均线收敛度因子
+type: technical
+expr: "abs(ma(close, 10) - ma(close, 20)) / ma(close, 20)"
+direction: negative
+description: 10日线与20日线相对距离，越近越好

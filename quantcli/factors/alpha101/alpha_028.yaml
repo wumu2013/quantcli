@@ -1,0 +1,6 @@
+name: ALPHA_028 均线金叉因子
+type: technical
+expr: "where(ma(close, 10) > ma(close, 20), 1, 0) * ts_rank(volume / ts_ave(volume, 20), 5)"
+direction: positive
+category: trend
+description: "均线金叉"

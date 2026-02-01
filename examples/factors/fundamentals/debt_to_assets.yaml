@@ -1,0 +1,5 @@
+name: 资产负债率因子
+type: fundamental
+expr: "debt_to_assets"
+direction: negative
+description: 资产负债率越低越好（财务风险小）

@@ -1,0 +1,28 @@
+name: Alpha101 趋势跟踪策略
+version: 1.0.0
+description: 基于Alpha101趋势类因子的短期趋势跟踪策略
+
+screening:
+  conditions:
+    - "close > 5"
+  limit: 300
+
+# 因子配置
+factors:
+  - alpha/alpha_005.yaml
+  - alpha/alpha_006.yaml
+  - alpha/alpha_009.yaml
+
+ranking:
+  weights:
+    alpha/alpha_005.yaml: 0.40   # 均线交叉趋势
+    alpha/alpha_006.yaml: 0.30   # 价格位置
+    alpha/alpha_009.yaml: 0.30   # 长期动量
+  normalize: zscore
+  conditions:
+    - "alpha_005 > 0"            # 趋势向上
+    - "alpha_006 > 0"            # 收盘在高位
+
+output:
+  columns: [symbol, score, rank, alpha_005, alpha_006, alpha_009]
+  limit: 30

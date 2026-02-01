@@ -1,0 +1,51 @@
+name: 价值股低估策略
+version: 1.0.0
+description: 选取低估值、高股息、稳健经营的价值型股票
+
+screening:
+  fundamental_conditions:
+    - "pe_ttm < 15"           # 低市盈率
+    - "pe_ttm > 0"            # 盈利为正
+    - "pb < 2"                # 低市净率
+    - "roe > 0.08"            # ROE > 8%
+    - "dividend_yield > 0.02" # 股息率 > 2%
+    - "market_cap > 100000"   # 市值 > 100亿
+
+# 因子配置
+factors:
+  - name: alpha_003           # 低波动率因子
+    expr: "ts_rank(ts_decayexp(close, 7), 10) - ts_rank(ts_decayexp(close, 20), 30)"
+    direction: positive
+    description: "低波动稳定"
+
+  - name: alpha_008           # 资金净流入因子
+    expr: "signed_power(where(close < open, volume, -volume), 2)"
+    direction: positive
+    description: "资金流入"
+
+  - name: alpha_007           # 量价稳定性
+    expr: "where(ts_rank(volume / ts_max(volume, 5), 5) < ts_rank(close / ts_max(close, 10), 10), -1, 1)"
+    direction: positive
+    description: "量价配合"
+
+ranking:
+  weights:
+    alpha_003: 0.3            # 低波动
+    alpha_008: 0.4            # 资金关注
+    alpha_007: 0.3            # 量价稳定
+  conditions: []
+  bonuses: []
+  normalize: zscore
+
+output:
+  limit: 30
+
+backtest:
+  entry:
+    price: open_next
+  exit:
+    - rule: timed
+      hold_days: 20           # 长期持有
+      time: "10:00"
+  capital: 1000000
+  fee: 0.0003

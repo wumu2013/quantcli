@@ -1,0 +1,6 @@
+name: ALPHA_017 价格宽度因子
+type: technical
+expr: "ts_rank(close / ts_ave(close, 50), 10) * ts_rank(volume / ts_ave(volume, 50), 5)"
+direction: positive
+category: trend
+description: "价格强度与成交量"

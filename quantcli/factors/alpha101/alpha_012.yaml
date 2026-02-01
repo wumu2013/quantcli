@@ -1,0 +1,6 @@
+name: ALPHA_012 成交量反转因子
+type: technical
+expr: "where(ts_rank(volume, 10) < ts_rank(close + ts_std(close, 5), 100), -1, 1)"
+direction: positive
+category: reversal
+description: "量价背离"

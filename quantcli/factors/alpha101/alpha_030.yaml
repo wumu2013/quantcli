@@ -1,0 +1,6 @@
+name: ALPHA_030 成交量比率因子
+type: technical
+expr: "ts_rank(volume / ts_max(volume, 20), 5)"
+direction: positive
+category: volume
+description: "相对成交量"

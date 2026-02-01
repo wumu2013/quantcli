@@ -1,0 +1,33 @@
+name: Alpha101 复合选股策略
+version: 1.0.0
+description: WorldQuant Alpha 101 多因子组合策略
+
+# 阶段1: 流动性筛选
+screening:
+  conditions:
+    - "close > 5"             # 排除低价股
+  limit: 500
+
+# 因子配置
+factors:
+  - alpha/alpha_001.yaml
+  - alpha/alpha_003.yaml
+  - alpha/alpha_005.yaml
+  - alpha/alpha_006.yaml
+  - alpha/alpha_009.yaml
+  - alpha/alpha_010.yaml
+
+# 阶段2: Alpha101 因子权重排序
+ranking:
+  weights:
+    alpha/alpha_001.yaml: 0.15   # 反转因子
+    alpha/alpha_003.yaml: 0.15   # 波动率反转
+    alpha/alpha_005.yaml: 0.20   # 趋势因子
+    alpha/alpha_006.yaml: 0.15   # 价格位置
+    alpha/alpha_009.yaml: 0.20   # 长期动量
+    alpha/alpha_010.yaml: 0.15   # 均价偏离
+  normalize: zscore
+
+output:
+  columns: [symbol, score, rank, alpha_001, alpha_003, alpha_005, alpha_006, alpha_009, alpha_010]
+  limit: 50
