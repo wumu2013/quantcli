@@ -2,7 +2,7 @@
 name: multi-factor-strategy
 description: Guide users to create multi-factor stock selection strategies and generate independent YAML configuration files
 ---
-{"homepage":"https://gitcode.com/datavoid/quantcli","user-invocable":true}
+{"homepage":"https://github.com/wumu2013/quantcli","user-invocable":true}
 
 # Multi-Factor Strategy Assistant
 
@@ -15,7 +15,7 @@ Guide you to create multi-factor stock selection strategies and generate indepen
 pip install quantcli
 
 # Or install from source
-git clone https://gitcode.com/datavoid/quantcli.git
+git clone https://github.com/wumu2013/quantcli.git
 cd quantcli
 pip install -e .
 ```
@@ -110,6 +110,22 @@ quantcli filter run -f your_strategy.yaml
 ```
 
 ## Available Expression Functions
+
+### Quick Reference Command
+
+```bash
+# List all available functions and columns
+quantcli expr list
+
+# List functions only
+quantcli expr functions
+
+# List columns only
+quantcli expr columns
+
+# JSON output (AI-friendly)
+quantcli expr list --json
+```
 
 ### Data Processing Functions
 | Function | Usage | Description |
@@ -293,3 +309,6 @@ A: Gradually relax conditions, first see how many stocks meet each condition
 
 **Q: What expression syntax is supported?**
 A: Supports 40+ built-in functions: `ma()`, `ema()`, `delay()`, `rolling_sum()`, `rsi()`, `rank()`, `zscore()`, etc.
+
+**Q: How to check available functions and columns?**
+A: Use `quantcli expr list` to see all available functions and columns. Add `--json` for AI-friendly output.

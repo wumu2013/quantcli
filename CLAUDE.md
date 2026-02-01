@@ -70,6 +70,11 @@ quantcli analyze batch -d examples/alpha101/alpha/ --top 10
 quantcli data fetch 600519 --start 2020-01-01
 quantcli data cache ls
 
+# Expr 命令 - 列出可用表达式
+quantcli expr list          # 列出所有函数和字段
+quantcli expr functions     # 列出内置函数 (30个)
+quantcli expr columns       # 列出字段别名 (9个)
+
 # Backtest 命令 (强制使用 MySQL 数据源)
 quantcli backtest run -s examples/strategies/my_strategy.yaml --start 2020-01-01
 quantcli backtest run -s strategy.yaml --symbol 600519  # 单股票回测

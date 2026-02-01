@@ -1339,6 +1339,109 @@ def config_set(ctx, key, value):
 
 
 # =============================================================================
+# Expr 命令 - 列出可用表达式
+# =============================================================================
+
+@quantcli.group()
+def expr():
+    """可用表达式列表"""
+    pass
+
+
+@expr.command("functions")
+@click.option("--json", is_flag=True, help="Output as JSON")
+@click.pass_context
+def expr_functions(ctx, json):
+    """列出所有内置函数"""
+    from .parser.constants import BUILTIN_FUNCTIONS
+
+    funcs = sorted(BUILTIN_FUNCTIONS)
+
+    if json:
+        import json
+        click.echo(json.dumps({"status": "success", "count": len(funcs), "functions": funcs}, ensure_ascii=False, indent=2))
+        return
+
+    click.echo(f"Built-in Functions ({len(funcs)} total):\n")
+    # 分列显示
+    cols = 4
+    for i in range(0, len(funcs), cols):
+        row = funcs[i:i + cols]
+        click.echo("  " + "  ".join(f"{f:<14}" for f in row))
+
+    click.echo("\nUsage examples:")
+    click.echo("  delay(close, 5)      # 5日前收盘价")
+    click.echo("  ma(close, 10)        # 10日均价")
+    click.echo("  zscore(close)        # Z分数标准化")
+    click.echo("  rank(close)          # 截面排名 (0-1)")
+
+
+@expr.command("columns")
+@click.option("--json", is_flag=True, help="Output as JSON")
+@click.pass_context
+def expr_columns(ctx, json):
+    """列出所有可用字段别名"""
+    from .parser.constants import COLUMN_ALIASES
+
+    aliases = list(COLUMN_ALIASES.items())
+
+    if json:
+        import json
+        click.echo(json.dumps({"status": "success", "count": len(aliases), "columns": [{"alias": k, "actual": v} for k, v in aliases]}, ensure_ascii=False, indent=2))
+        return
+
+    click.echo(f"Column Aliases ({len(aliases)} total):\n")
+    click.echo(f"{'Alias':<20} {'Actual Column':<20}")
+    click.echo("-" * 40)
+    for alias, actual in sorted(aliases):
+        click.echo(f"{alias:<20} {actual:<20}")
+
+    click.echo("\nUsage examples:")
+    click.echo("  'pe < 20'           # 市盈率小于20")
+    click.echo("  'roe > 0.1'         # ROE大于10%")
+    click.echo("  'netprofitmargin > 0.05'  # 净利润率大于5%")
+
+
+@expr.command("list")
+@click.option("--json", is_flag=True, help="Output as JSON")
+@click.pass_context
+def expr_list(ctx, json):
+    """列出所有可用表达式（函数 + 字段）"""
+    from .parser.constants import BUILTIN_FUNCTIONS, COLUMN_ALIASES
+
+    functions = sorted(BUILTIN_FUNCTIONS)
+    columns = sorted(COLUMN_ALIASES.keys())
+
+    if json:
+        import json
+        click.echo(json.dumps({
+            "status": "success",
+            "functions": {"count": len(functions), "items": functions},
+            "columns": {"count": len(columns), "items": columns}
+        }, ensure_ascii=False, indent=2))
+        return
+
+    click.echo("=" * 50)
+    click.echo("Available Expressions")
+    click.echo("=" * 50)
+
+    click.echo(f"\nFunctions ({len(functions)}):")
+    cols = 4
+    for i in range(0, len(functions), cols):
+        row = functions[i:i + cols]
+        click.echo("  " + "  ".join(f"{f:<14}" for f in row))
+
+    click.echo(f"\nColumns ({len(columns)}):")
+    for col in columns:
+        click.echo(f"  - {col}")
+
+    click.echo("\n" + "=" * 50)
+    click.echo("Use 'quantcli expr functions' for detailed function list")
+    click.echo("Use 'quantcli expr columns' for detailed column list")
+    click.echo("=" * 50)
+
+
+# =============================================================================
 # 辅助函数
 # =============================================================================
 

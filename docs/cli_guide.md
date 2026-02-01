@@ -723,6 +723,54 @@ quantcli config show
 quantcli config set KEY VALUE
 ```
 
+### quantcli expr - 可用表达式列表
+
+```bash
+# 列出所有函数和字段
+quantcli expr list
+
+# 列出所有内置函数
+quantcli expr functions
+
+# 列出所有字段别名
+quantcli expr columns
+```
+
+**示例:**
+
+```bash
+# 查看所有可用表达式
+quantcli expr list
+
+# 查看函数列表
+quantcli expr functions
+
+# 查看字段别名
+quantcli expr columns
+
+# JSON 格式输出 (AI 推荐)
+quantcli expr list --json
+```
+
+**输出示例:**
+
+```
+==================================================
+Available Expressions
+==================================================
+
+Functions (30):
+  abs             clamp           correlation     cross_down
+  cross_up        delay           ema             if
+  ...
+
+Columns (9):
+  - asset_equity_ratio
+  - debt_to_assets
+  - gross_profit_margin
+  ...
+```
+
 ---
 
 ## 完整示例

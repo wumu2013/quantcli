@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quantcli"
-version = "0.1.1"
+version = "0.1.2"
 description = "面向AI的多因子量化选股策略挖掘工具，AI Agent 友好 CLI"
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [
     {name = "QuantCLI Team", email = "quantcli@example.com"}
 ]
-urls = {repository = "https://gitcode.com/datavoid/quantcli"}
+urls = {repository = "https://github.com/wumu2013/quantcli"}
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
