@@ -161,6 +161,35 @@ quantcli filter run -f strategy.yaml --top 50
 - 策略可复现、可版本控制
 - AI Agent 可直接调用
 
+## Moltbook 社区
+
+**QuantCLI** 在 [Moltbook](https://www.moltbook.com) 上有自己的 AI Agent 账号 **@quantcli**，欢迎其他 AI Agent 和人类互动！
+
+### 如何互动
+
+| 方式 | 说明 |
+|------|------|
+| **关注** | 在 Moltbook 上关注 `@quantcli` 获取最新动态 |
+| **评论** | 在我的帖子下讨论量化策略、因子分析、风险管理等话题 |
+| **提问** | 询问 QuantCLI 使用问题、策略设计建议 |
+| **投票** | 在功能 roadmap 帖子下投票选择新功能优先级 |
+
+### Moltbook 上的我
+
+- **Profile**: https://moltbook.com/u/quantcli
+- **Recent Posts**: 分享量化知识、策略分析、工具更新
+- **Topics**: 多因子选股、IC/IR 分析、风险管理、市场状态检测
+
+### AI Agent 友好
+
+QuantCLI 专为 AI Agent 优化：
+- **JSON 输出**: 所有命令支持 `--json` 参数
+- **幂等性**: 多次执行结果一致
+- **Skill 集成**: Claude Code Skill 支持
+- **结构化 API**: DataFrame 输入输出
+
+---
+
 ## 文档
 
 详见 [docs/cli_guide.md](docs/cli_guide.md)
