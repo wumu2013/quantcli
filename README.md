@@ -102,9 +102,15 @@ ranking:
 
 ### Claude Code Skill
 
+QuantCLI 提供 Claude Code Skill，可在 Claude Code 中直接调用：
+
 ```markdown
-/skill multi-factor-strategy --goal "低估+高ROE" --output strategy.yaml
+/skill https://github.com/wumu2013/quantcli/raw/main/.claude/skills/skill-multi-factor-strategy/skill.md
 ```
+
+或访问 [ClawHub](https://www.clawhub.ai/wumu2013/multi-factor-strategy) 获取更多安装方式。
+
+Skill 功能：引导创建多因子选股策略，生成 YAML 配置文件。
 
 ## 多因子筛选示例
 
