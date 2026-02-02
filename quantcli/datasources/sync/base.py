@@ -147,32 +147,84 @@ class DataSync(ABC):
 
 # ==================== 工厂函数 ====================
 
-def create_sync(source: str, token: str = None) -> DataSync:
+def create_sync(
+    source: str,
+    token: str = None,
+    mysql_host: str = None,
+    mysql_port: int = None,
+    mysql_user: str = None,
+    mysql_password: str = None,
+    mysql_database: str = None,
+    mysql_table_prefix: str = None,
+) -> "DataSync":
     """创建同步器
 
     Args:
         source: 数据源名称 ("gm", "akshare", "baostock")
-        token: API token (部分数据源需要)
+        token: API token (仅 gm 需要)
+        mysql_host: MySQL 主机地址
+        mysql_port: MySQL 端口
+        mysql_user: MySQL 用户名
+        mysql_password: MySQL 密码
+        mysql_database: MySQL 数据库名
+        mysql_table_prefix: 表前缀
 
     Returns:
         DataSync 实例
 
     Raises:
         ValueError: 不支持的数据源
+
+    Examples:
+        >>> # 使用默认 MySQL 连接
+        >>> sync = create_sync("gm", token="your_token")
+        >>> sync.sync_daily(["600519"], date(2024, 1, 1))
+
+        >>> # 指定 MySQL 连接参数
+        >>> sync = create_sync(
+        ...     "gm",
+        ...     token="your_token",
+        ...     mysql_host="192.168.1.100",
+        ...     mysql_port=3307,
+        ...     mysql_user="quant",
+        ...     mysql_password="secret",
+        ...     mysql_database="quantdb",
+        ...     mysql_table_prefix="test_"
+        ... )
+
+        >>> # 使用 akshare 同步到自定义数据库
+        >>> sync = create_sync(
+        ...     "akshare",
+        ...     mysql_host="localhost",
+        ...     mysql_database="mydata",
+        ...     mysql_table_prefix="prod_"
+        ... )
     """
+    from ..mysql import MySQLDataSource
+
     source = source.lower()
+
+    # 创建 MySQL 数据源（传入连接参数）
+    mysql = MySQLDataSource(
+        host=mysql_host,
+        port=mysql_port,
+        user=mysql_user,
+        password=mysql_password,
+        database=mysql_database,
+        table_prefix=mysql_table_prefix,
+    )
 
     if source == "gm":
         from .gm import GmSync
-        return GmSync(token=token)
+        return GmSync(token=token, mysql=mysql)
 
     elif source == "akshare":
         from .akshare import AkshareSync
-        return AkshareSync(token=token)
+        return AkshareSync(token=token, mysql=mysql)
 
     elif source == "baostock":
-        from .baostock import BaostockSync
-        return BaostockSync(token=token)
+        from .akshare import AkshareSync
+        return AkshareSync(token=token, mysql=mysql)
 
     else:
         raise ValueError(f"Unsupported sync source: {source}. "

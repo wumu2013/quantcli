@@ -1,6 +1,6 @@
 # MySQL 数据源说明
 
-**版本:** v1.1.0
+**版本:** v1.2.0
 
 回测引擎使用 MySQL 作为数据源，以提供高效的批量数据查询能力。
 
@@ -215,20 +215,70 @@ for symbol in ["600519", "000001", "000002"]:
 |--------|------|------------|
 | `gm` | 掘金量化 | 是 |
 | `akshare` | Akshare | 否 |
+| `baostock` | Baostock (同 akshare) | 否 |
 
 ### 快速开始
+
+#### 方式 1：使用环境变量（默认连接）
 
 ```python
 from quantcli.datasources import create_sync
 from datetime import date
 
-# 创建同步器
+# 创建同步器（使用默认 MySQL 连接）
 sync = create_sync("gm", token="your_gm_token")
 
 # 查看同步进度
 progress = sync.get_progress("600519")
 print(f"600519 最新日期: {progress}")
 ```
+
+#### 方式 2：直接传入 MySQL 连接参数
+
+```python
+from quantcli.datasources import create_sync
+from datetime import date
+
+# 创建同步器（指定 MySQL 连接）
+sync = create_sync(
+    "akshare",  # 数据源
+    mysql_host="192.168.1.100",      # MySQL 主机
+    mysql_port=3307,                 # MySQL 端口
+    mysql_user="quant",              # 用户名
+    mysql_password="secret",         # 密码
+    mysql_database="quantdb",        # 数据库名
+    mysql_table_prefix="prod_"       # 表前缀（可选）
+)
+
+# 同步日线数据
+result = sync.sync_daily(
+    symbols=["600519", "000001"],
+    start_date=date(2024, 1, 1),
+    end_date=date(2024, 12, 31)
+)
+print(result)
+# {'600519': 240, '000001': 238}
+```
+
+### API 参考
+
+```python
+create_sync(
+    source: str,                     # 数据源: "gm", "akshare", "baostock"
+    token: str = None,               # API token (仅 gm 需要)
+    mysql_host: str = None,          # MySQL 主机地址
+    mysql_port: int = None,          # MySQL 端口
+    mysql_user: str = None,          # MySQL 用户名
+    mysql_password: str = None,      # MySQL 密码
+    mysql_database: str = None,      # MySQL 数据库名
+    mysql_table_prefix: str = None,  # 表前缀
+) -> DataSync
+```
+
+**说明**：
+- 如果不传 MySQL 参数，则使用环境变量配置
+- 传入 `None` 的参数会回退到环境变量或默认值
+- 表前缀可用于区分不同项目的数据表（如 `prod_daily_prices`）
 
 ### 批量同步日线
 
@@ -354,7 +404,18 @@ progress_minute = sync.get_progress_minute("600519", "5")
 from quantcli.datasources import create_sync
 from datetime import date
 
-sync = create_sync("akshare")  # 不需要 token
+# 方式 1：使用环境变量
+sync = create_sync("akshare")
+
+# 方式 2：指定 MySQL 连接
+sync = create_sync(
+    "akshare",
+    mysql_host="localhost",
+    mysql_user="root",
+    mysql_password="",
+    mysql_database="quantcli",
+    mysql_table_prefix="test_"
+)
 
 # 同步日线
 sync.sync_daily(["600519", "000001"], date(2024, 1, 1))
@@ -364,6 +425,10 @@ sync.sync_minute(["600519"], "5", date(2024, 1, 1))
 
 # 同步基本面
 sync.sync_fundamental(["600519"])
+
+# 健康检查
+health = sync._mysql.health_check()
+print(health)
 ```
 
 ## 使用示例
@@ -599,22 +664,44 @@ health = ds.health_check()
 
 ## 完整配置示例
 
+### 环境变量配置
+
 ```bash
-# 环境变量配置 (.env 或 ~/.bashrc)
-MYSQL_HOST=localhost
-MYSQL_PORT=3306
-MYSQL_USER=quantcli
-MYSQL_PASSWORD=secure_password_here
-MYSQL_DATABASE=quantcli
-MYSQL_TABLE_PREFIX=
+# ~/.bashrc 或 ~/.zshrc
+export MYSQL_HOST=localhost
+export MYSQL_PORT=3306
+export MYSQL_USER=quantcli
+export MYSQL_PASSWORD=secure_password_here
+export MYSQL_DATABASE=quantcli
+export MYSQL_TABLE_PREFIX=
 ```
 
+### 代码中使用连接参数
+
 ```python
-# 使用示例
+from quantcli.datasources import create_sync
 from quantcli.datasources import create_datasource
 from datetime import date, timedelta
 
-# 创建数据源
+# === 使用 create_sync 同步数据 ===
+
+# 同步到远程 MySQL
+sync = create_sync(
+    "akshare",
+    mysql_host="192.168.1.100",
+    mysql_port=3306,
+    mysql_user="quant",
+    mysql_password="secret",
+    mysql_database="quantdb",
+    mysql_table_prefix="prod_"
+)
+
+# 同步数据
+sync.sync_daily(["600519", "000001"], date(2024, 1, 1), date(2024, 12, 31))
+
+# === 使用 create_datasource 查询数据 ===
+
+# 连接到 MySQL
 ds = create_datasource("mysql")
 
 # 检查数据量
@@ -626,4 +713,34 @@ end_date = date.today() - timedelta(1)
 start_date = end_date - timedelta(100)
 df = ds.get_daily("600519", start_date, end_date)
 print(f"获取 {len(df)} 条记录")
+```
+
+### 远程 MySQL 连接示例
+
+```python
+# 连接到生产环境数据库
+sync = create_sync(
+    "gm",
+    token="your_gm_token",
+    mysql_host="prod-db.example.com",
+    mysql_port=3306,
+    mysql_user="app_user",
+    mysql_password="your_password",
+    mysql_database="quant_production",
+    mysql_table_prefix=""  # 生产环境无前缀
+)
+
+# 同步数据到生产环境
+sync.sync_daily(["600519"], date(2025, 1, 1))
+
+# 连接到测试环境数据库
+test_sync = create_sync(
+    "akshare",
+    mysql_host="localhost",
+    mysql_database="quant_test",
+    mysql_table_prefix="test_"  # 测试环境使用前缀
+)
+
+# 同步数据到测试环境
+test_sync.sync_daily(["600519"], date(2025, 1, 1))
 ```
