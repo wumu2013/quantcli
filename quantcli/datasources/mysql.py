@@ -6,14 +6,21 @@
 - 回测友好：支持批量读取多只股票数据
 
 表结构：
-- daily_prices: 日线数据
+- daily_prices: 日线数据 (symbol 格式: SH600519, SZ000001)
 - stock_list: 股票列表
 - trading_calendar: 交易日历
 - fundamental_data: 基本面数据
 
+代码格式：
+- MySQL 新格式：SH600519 (上海), SZ000001 (深圳), SZ510500 (ETF)
+- MySQL 旧格式：600519 (纯数字，已兼容转换)
+- 掘金格式：SHSE.600519
+- Akshare 格式：sh.600519
+
 使用示例：
     >>> ds = create_datasource("mysql")
-    >>> df = ds.get_daily("600519", date(2024,1,1), date(2024,1,31))
+    >>> df = ds.get_daily("600519", date(2024,1,1), date(2024,1,31))  # 自动转换
+    >>> df = ds.get_daily("SH600519", date(2024,1,1), date(2024,1,31))  # 新格式
     >>> ds.sync_from_akshare()  # 从 akshare 同步数据
 """
 
@@ -23,6 +30,7 @@ from typing import List, Optional, Dict, Any
 import pandas as pd
 
 from ..utils import get_logger, format_date
+from ..utils.symbol_utils import to_mysql, normalize
 from .base import DataSource, DataSourceConfig
 
 logger = get_logger(__name__)
@@ -191,6 +199,14 @@ class MySQLDataSource(DataSource):
 
     # ==================== 价格数据 ====================
 
+    def _to_mysql_symbol(self, symbol: str) -> str:
+        """将任意格式转换为 MySQL 新格式（带前缀）"""
+        return to_mysql(symbol)
+
+    def _to_mysql_symbols(self, symbols: List[str]) -> List[str]:
+        """批量转换为 MySQL 新格式"""
+        return [to_mysql(s) for s in symbols]
+
     def get_daily(
         self,
         symbol: str,
@@ -198,7 +214,20 @@ class MySQLDataSource(DataSource):
         end_date,
         fields: Optional[List[str]] = None
     ) -> pd.DataFrame:
-        """获取日线数据"""
+        """获取日线数据
+
+        Args:
+            symbol: 股票代码（支持任意格式：600519, SH600519, SHSE.600519, sh.600519）
+            start_date: 开始日期
+            end_date: 结束日期
+            fields: 返回字段（可选）
+
+        Returns:
+            DataFrame with columns: symbol, date, open, high, low, close, volume, amount
+        """
+        # 转换为 MySQL 新格式
+        mysql_symbol = self._to_mysql_symbol(symbol)
+
         conn = self._get_connection()
         start_str = format_date(start_date, "%Y-%m-%d")
         end_str = format_date(end_date, "%Y-%m-%d")
@@ -212,7 +241,7 @@ class MySQLDataSource(DataSource):
 
         try:
             with conn.cursor() as cursor:
-                cursor.execute(sql, (symbol, start_str, end_str))
+                cursor.execute(sql, (mysql_symbol, start_str, end_str))
                 rows = cursor.fetchall()
 
             if not rows:
@@ -235,15 +264,27 @@ class MySQLDataSource(DataSource):
         start_date,
         end_date
     ) -> Dict[str, pd.DataFrame]:
-        """批量获取多只股票的日线数据（回测优化）"""
+        """批量获取多只股票的日线数据（回测优化）
+
+        Args:
+            symbols: 股票代码列表（支持任意格式）
+            start_date: 开始日期
+            end_date: 结束日期
+
+        Returns:
+            {symbol: DataFrame} 字典，key 为 MySQL 新格式
+        """
         if not symbols:
             return {}
+
+        # 转换为 MySQL 新格式
+        mysql_symbols = self._to_mysql_symbols(symbols)
 
         conn = self._get_connection()
         start_str = format_date(start_date, "%Y-%m-%d")
         end_str = format_date(end_date, "%Y-%m-%d")
 
-        placeholders = ",".join(["%s"] * len(symbols))
+        placeholders = ",".join(["%s"] * len(mysql_symbols))
         sql = f"""
             SELECT symbol, trade_date, open, high, low, close, volume, amount
             FROM {self._table('daily_prices')}
@@ -253,7 +294,7 @@ class MySQLDataSource(DataSource):
 
         try:
             with conn.cursor() as cursor:
-                cursor.execute(sql, tuple(symbols) + (start_str, end_str))
+                cursor.execute(sql, tuple(mysql_symbols) + (start_str, end_str))
                 rows = cursor.fetchall()
 
             # 按股票分组
@@ -262,10 +303,10 @@ class MySQLDataSource(DataSource):
             if not df.empty:
                 df = df.rename(columns={'trade_date': 'date'})
                 df['date'] = pd.to_datetime(df['date']).dt.date
-                for symbol in symbols:
-                    symbol_df = df[df['symbol'] == symbol].copy()
+                for mysql_symbol in mysql_symbols:
+                    symbol_df = df[df['symbol'] == mysql_symbol].copy()
                     if not symbol_df.empty:
-                        result[symbol] = symbol_df
+                        result[mysql_symbol] = symbol_df
 
             return result
         except Exception as e:
@@ -294,7 +335,7 @@ class MySQLDataSource(DataSource):
         """获取分钟级数据
 
         Args:
-            symbol: 股票代码
+            symbol: 股票代码（支持任意格式）
             start_date: 开始日期
             end_date: 结束日期
             period: 分钟周期 ("1", "5", "15", "30", "60")
@@ -302,6 +343,9 @@ class MySQLDataSource(DataSource):
         Returns:
             DataFrame(columns=['date', 'open', 'high', 'low', 'close', 'volume', 'amount'])
         """
+        # 转换为 MySQL 新格式
+        mysql_symbol = self._to_mysql_symbol(symbol)
+
         conn = self._get_connection()
 
         # 默认范围：最近 5 个交易日
@@ -324,7 +368,7 @@ class MySQLDataSource(DataSource):
 
         try:
             with conn.cursor() as cursor:
-                cursor.execute(sql, (symbol, start_str, end_str, period))
+                cursor.execute(sql, (mysql_symbol, start_str, end_str, period))
                 rows = cursor.fetchall()
 
             if not rows:
@@ -348,15 +392,28 @@ class MySQLDataSource(DataSource):
         end_date: date,
         period: str = "5"
     ) -> Dict[str, pd.DataFrame]:
-        """批量获取多只股票的分钟级数据（回测优化）"""
+        """批量获取多只股票的分钟级数据（回测优化）
+
+        Args:
+            symbols: 股票代码列表（支持任意格式）
+            start_date: 开始日期
+            end_date: 结束日期
+            period: 分钟周期 ("1", "5", "15", "30", "60")
+
+        Returns:
+            {symbol: DataFrame} 字典，key 为 MySQL 新格式
+        """
         if not symbols:
             return {}
+
+        # 转换为 MySQL 新格式
+        mysql_symbols = self._to_mysql_symbols(symbols)
 
         conn = self._get_connection()
         start_str = format_date(start_date, "%Y-%m-%d")
         end_str = format_date(end_date, "%Y-%m-%d")
 
-        placeholders = ",".join(["%s"] * len(symbols))
+        placeholders = ",".join(["%s"] * len(mysql_symbols))
         sql = f"""
             SELECT symbol, trade_date, trade_time, period,
                    open, high, low, close, volume, amount
@@ -367,7 +424,7 @@ class MySQLDataSource(DataSource):
 
         try:
             with conn.cursor() as cursor:
-                cursor.execute(sql, tuple(symbols) + (start_str, end_str, period))
+                cursor.execute(sql, tuple(mysql_symbols) + (start_str, end_str, period))
                 rows = cursor.fetchall()
 
             result = {}
@@ -375,16 +432,45 @@ class MySQLDataSource(DataSource):
             if not df.empty:
                 df['datetime'] = pd.to_datetime(df['trade_date'].astype(str) + ' ' + df['trade_time'].astype(str))
                 df = df.rename(columns={'datetime': 'date'})
-                for symbol in symbols:
-                    symbol_df = df[df['symbol'] == symbol].copy()
+                for mysql_symbol in mysql_symbols:
+                    symbol_df = df[df['symbol'] == mysql_symbol].copy()
                     if not symbol_df.empty:
                         symbol_df = symbol_df.drop(columns=['trade_date', 'trade_time', 'period', 'symbol'])
-                        result[symbol] = symbol_df[['date', 'open', 'high', 'low', 'close', 'volume', 'amount']]
+                        result[mysql_symbol] = symbol_df[['date', 'open', 'high', 'low', 'close', 'volume', 'amount']]
 
             return result
         except Exception as e:
             logger.error(f"Failed to get multi intraday data: {e}")
             return {}
+
+    def get_pool_minute_data(
+        self,
+        symbols: List[str],
+        start_date: date,
+        end_date: date,
+        period: str = "5"
+    ) -> Dict[str, pd.DataFrame]:
+        """获取股票池的分钟数据（用于 on_bar ranking）
+
+        Args:
+            symbols: 股票代码列表（支持任意格式）
+            start_date: 开始日期
+            end_date: 结束日期
+            period: 分钟周期 ("1", "5", "15", "30", "60")
+
+        Returns:
+            {symbol: DataFrame} 字典，key 为 MySQL 新格式
+            DataFrame 包含 ['date', 'open', 'high', 'low', 'close', 'volume', 'amount']
+
+        Note:
+            返回格式兼容 FactorComputer.compute_all_factors()
+        """
+        # 转换为 MySQL 新格式
+        mysql_symbols = self._to_mysql_symbols(symbols)
+
+        result = self.get_multi_intraday(mysql_symbols, start_date, end_date, period)
+
+        return result
 
     def sync_intraday_from_akshare(
         self,
@@ -396,7 +482,7 @@ class MySQLDataSource(DataSource):
         """从 akshare 同步分钟级数据到 MySQL
 
         Args:
-            symbol: 股票代码
+            symbol: 股票代码（支持任意格式）
             start_date: 开始日期
             end_date: 结束日期
             period: 分钟周期 ("1", "5", "15", "30", "60")
@@ -416,6 +502,9 @@ class MySQLDataSource(DataSource):
         if df.empty:
             logger.warning(f"No intraday data for {symbol}")
             return
+
+        # 转换为 MySQL 新格式
+        mysql_symbol = self._to_mysql_symbol(symbol)
 
         conn = self._get_connection()
         with conn.cursor() as cursor:
@@ -437,7 +526,7 @@ class MySQLDataSource(DataSource):
                     volume = VALUES(volume),
                     amount = VALUES(amount)
                 """, (
-                    symbol,
+                    mysql_symbol,
                     trade_date,
                     trade_time,
                     period,
@@ -449,7 +538,7 @@ class MySQLDataSource(DataSource):
                     row.get('amount', 0)
                 ))
 
-        logger.info(f"Synced {len(df)} intraday records for {symbol}")
+        logger.info(f"Synced {len(df)} intraday records for {mysql_symbol}")
 
     # ==================== 股票列表和日历 ====================
 
@@ -506,11 +595,20 @@ class MySQLDataSource(DataSource):
         date,
         indicators: Optional[List[str]] = None
     ) -> pd.DataFrame:
-        """获取基本面数据"""
+        """获取基本面数据
+
+        Args:
+            symbols: 股票代码列表（支持任意格式）
+            date: 截止日期
+            indicators: 指标列表（可选）
+        """
+        # 转换为 MySQL 新格式
+        mysql_symbols = self._to_mysql_symbols(symbols)
+
         conn = self._get_connection()
         date_str = format_date(date, "%Y-%m-%d")
 
-        placeholders = ",".join(["%s"] * len(symbols))
+        placeholders = ",".join(["%s"] * len(mysql_symbols))
         sql = f"""
             SELECT symbol, report_date, roe, netprofitmargin, grossprofitmargin, pe_ttm, pb
             FROM {self._table('fundamental_data')}
@@ -520,7 +618,7 @@ class MySQLDataSource(DataSource):
 
         try:
             with conn.cursor() as cursor:
-                cursor.execute(sql, tuple(symbols) + (date_str,))
+                cursor.execute(sql, tuple(mysql_symbols) + (date_str,))
                 rows = cursor.fetchall()
 
             if not rows:
@@ -569,6 +667,9 @@ class MySQLDataSource(DataSource):
                 if df.empty:
                     continue
 
+                # 转换为 MySQL 新格式
+                mysql_symbol = self._to_mysql_symbol(symbol)
+
                 # 插入数据库
                 with conn.cursor() as cursor:
                     for _, row in df.iterrows():
@@ -584,7 +685,7 @@ class MySQLDataSource(DataSource):
                             volume = VALUES(volume),
                             amount = VALUES(amount)
                         """, (
-                            symbol,
+                            mysql_symbol,
                             row['date'],
                             row['open'],
                             row['high'],

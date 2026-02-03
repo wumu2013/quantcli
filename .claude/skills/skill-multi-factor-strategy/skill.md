@@ -1,5 +1,6 @@
 ---
 name: multi-factor-strategy
+version: 1.4.0
 description: Guide users to create multi-factor stock selection strategies and generate independent YAML configuration files
 ---
 {"homepage":"https://github.com/wumu2013/quantcli","user-invocable":true}
@@ -24,6 +25,33 @@ Verify installation:
 ```bash
 quantcli --help
 ```
+
+## Getting Help & Available Resources
+
+**Quick Reference:**
+
+```bash
+# Get CLI help (all commands)
+quantcli --help
+
+# List all available functions and columns
+quantcli expr list
+
+# List functions only
+quantcli expr functions
+
+# List columns only
+quantcli expr columns
+
+# List all built-in factors (Alpha101)
+quantcli factors list
+
+# JSON output (AI-friendly)
+quantcli expr list --json
+quantcli factors list --json
+```
+
+**AI Agent Tip:** When creating strategies, use `quantcli expr list --json` to get the complete list of available functions and fields in machine-readable format.
 
 ## Quick Start
 
@@ -308,7 +336,4 @@ A: Core factors 0.3-0.4, auxiliary factors 0.1-0.2, ensure weights sum close to 
 A: Gradually relax conditions, first see how many stocks meet each condition
 
 **Q: What expression syntax is supported?**
-A: Supports 40+ built-in functions: `ma()`, `ema()`, `delay()`, `rolling_sum()`, `rsi()`, `rank()`, `zscore()`, etc.
-
-**Q: How to check available functions and columns?**
-A: Use `quantcli expr list` to see all available functions and columns. Add `--json` for AI-friendly output.
+A: Supports 40+ built-in functions: `ma()`, `ema()`, `delay()`, `rolling_sum()`, `rsi()`, `rank()`, `zscore()`, etc. Use `quantcli expr list` to see all available functions.

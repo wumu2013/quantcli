@@ -2,14 +2,23 @@
 
 从掘金量化 API 同步数据到 MySQL。
 
+代码格式:
+- 掘金格式: SHSE.600519, SZSE.000001
+- MySQL 新格式: SH600519, SZ000001 (带前缀)
+
 使用示例:
     >>> from quantcli.datasources import create_sync
     >>> sync = create_sync("gm", token="your_token")
-    >>> sync.sync_daily(["600519", "000001"], date(2024, 1, 1))
+    >>> sync.sync_daily(["SHSE.600519", "SZSE.000001"], date(2024, 1, 1))
+
+    # on_bar 中使用 MinuteBar
+    >>> from quantcli.models.bar import MinuteBar
+    >>> bar = MinuteBar.from_gm_bar("SH600519", gm_bar, period="5")
+    >>> sync.sync_minute_bar(bar)
 """
 
 from datetime import date, datetime, timedelta
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 import logging
 
 logger = logging.getLogger(__name__)
@@ -114,13 +123,15 @@ class GmSync:
         """同步日线数据
 
         Args:
-            symbols: 股票代码列表
+            symbols: 股票代码列表（支持掘金格式: SHSE.600519 或 MySQL 新格式: SH600519）
             start_date: 开始日期
             end_date: 结束日期，默认到昨天
 
         Returns:
-            {"symbol": records_count, ...}
+            {"symbol": records_count, ...}，key 为 MySQL 新格式
         """
+        from quantcli.utils.symbol_utils import to_mysql, extract_code
+
         self._init_gm()
         from gm.api import history, ADJUST_PREV
 
@@ -132,21 +143,28 @@ class GmSync:
         table = self._get_daily_table()
 
         for symbol in symbols:
-            # 检查已有进度，增量同步
-            latest = self.get_progress(symbol)
+            # 转换为 MySQL 新格式用于存储
+            mysql_symbol = to_mysql(symbol)
+            # 提取纯代码用于掘金 API 查询
+            gm_code = extract_code(symbol)
+            # 转换为掘金格式
+            gm_symbol = f"SHSE.{gm_code}" if to_mysql(symbol).startswith("SH") else f"SZSE.{gm_code}"
+
+            # 检查已有进度（使用 MySQL 格式）
+            latest = self.get_progress(mysql_symbol)
             if latest and latest >= start_date:
                 actual_start = latest + timedelta(days=1)
             else:
                 actual_start = start_date
 
             if actual_start > end_date:
-                logger.info(f"{symbol}: already up to date")
-                result[symbol] = 0
+                logger.info(f"{mysql_symbol}: already up to date")
+                result[mysql_symbol] = 0
                 continue
 
             try:
                 data = history(
-                    symbol=symbol,
+                    symbol=gm_symbol,
                     frequency='1d',
                     start_time=f"{actual_start} 09:30:00",
                     end_time=f"{end_date} 16:00:00",
@@ -156,10 +174,10 @@ class GmSync:
                 )
 
                 if data.empty:
-                    result[symbol] = 0
+                    result[mysql_symbol] = 0
                     continue
 
-                # 写入数据库
+                # 写入数据库（使用 MySQL 新格式）
                 count = 0
                 with conn.cursor() as cursor:
                     for _, row in data.iterrows():
@@ -177,7 +195,7 @@ class GmSync:
                             volume = VALUES(volume),
                             amount = VALUES(amount)
                         """, (
-                            symbol,
+                            mysql_symbol,
                             trade_date,
                             row['open'],
                             row['high'],
@@ -188,12 +206,12 @@ class GmSync:
                         ))
                         count += 1
 
-                result[symbol] = count
-                logger.info(f"{symbol}: synced {count} daily records")
+                result[mysql_symbol] = count
+                logger.info(f"{mysql_symbol}: synced {count} daily records")
 
             except Exception as e:
                 logger.error(f"Failed to sync daily for {symbol}: {e}")
-                result[symbol] = -1
+                result[mysql_symbol] = -1
 
         return result
 
@@ -209,14 +227,16 @@ class GmSync:
         """同步分钟线数据
 
         Args:
-            symbols: 股票代码列表
+            symbols: 股票代码列表（支持掘金格式: SHSE.600519 或 MySQL 新格式: SH600519）
             period: 分钟周期 ("1", "5", "15", "30", "60")
             start_date: 开始日期，默认 5 天前
             end_date: 结束日期，默认到昨天
 
         Returns:
-            {"symbol": records_count, ...}
+            {"symbol": records_count, ...}，key 为 MySQL 新格式
         """
+        from quantcli.utils.symbol_utils import to_mysql, extract_code
+
         # 先检查 period 参数，再初始化 gm
         if period not in self.PERIOD_MAP:
             raise ValueError(f"Invalid period: {period}. Valid: {list(self.PERIOD_MAP.keys())}")
@@ -236,21 +256,28 @@ class GmSync:
         table = self._get_minute_table()
 
         for symbol in symbols:
-            # 检查进度
-            latest = self.get_progress_minute(symbol, period)
+            # 转换为 MySQL 新格式用于存储
+            mysql_symbol = to_mysql(symbol)
+            # 提取纯代码用于掘金 API 查询
+            gm_code = extract_code(symbol)
+            # 转换为掘金格式
+            gm_symbol = f"SHSE.{gm_code}" if to_mysql(symbol).startswith("SH") else f"SZSE.{gm_code}"
+
+            # 检查进度（使用 MySQL 格式）
+            latest = self.get_progress_minute(mysql_symbol, period)
             if latest and latest >= start_date:
                 actual_start = latest + timedelta(days=1)
             else:
                 actual_start = start_date
 
             if actual_start > end_date:
-                logger.info(f"{symbol}: minute data already up to date")
-                result[symbol] = 0
+                logger.info(f"{mysql_symbol}: minute data already up to date")
+                result[mysql_symbol] = 0
                 continue
 
             try:
                 data = history(
-                    symbol=symbol,
+                    symbol=gm_symbol,
                     frequency=gm_period,
                     start_time=f"{actual_start} 09:30:00",
                     end_time=f"{end_date} 16:00:00",
@@ -260,10 +287,10 @@ class GmSync:
                 )
 
                 if data.empty:
-                    result[symbol] = 0
+                    result[mysql_symbol] = 0
                     continue
 
-                # 写入数据库
+                # 写入数据库（使用 MySQL 新格式）
                 count = 0
                 with conn.cursor() as cursor:
                     for _, row in data.iterrows():
@@ -285,7 +312,7 @@ class GmSync:
                             volume = VALUES(volume),
                             amount = VALUES(amount)
                         """, (
-                            symbol,
+                            mysql_symbol,
                             trade_date,
                             trade_time,
                             period,
@@ -298,12 +325,12 @@ class GmSync:
                         ))
                         count += 1
 
-                result[symbol] = count
-                logger.info(f"{symbol}: synced {count} {period}min records")
+                result[mysql_symbol] = count
+                logger.info(f"{mysql_symbol}: synced {count} {period}min records")
 
             except Exception as e:
                 logger.error(f"Failed to sync minute for {symbol}: {e}")
-                result[symbol] = -1
+                result[mysql_symbol] = -1
 
         return result
 
@@ -358,50 +385,44 @@ class GmSync:
 
     # ==================== on_bar 事件同步 ====================
 
-    def sync_bar(self, symbol: str, bar) -> bool:
+    def sync_bar(self, bar) -> bool:
         """同步单根日线 bar 到 MySQL
 
-        用于 on_bar 事件中实时同步数据。
+        支持 DailyBar dataclass 或 gm.api.Bar 对象（向后兼容）。
 
         Args:
-            symbol: 股票代码
-            bar: gm.api.Bar 对象或字典
+            bar: DailyBar dataclass 或 gm.api.Bar 对象
 
         Returns:
             是否成功
 
         使用示例:
+            # 推荐: 使用 DailyBar
+            >>> from quantcli.models.bar import DailyBar
+            >>> daily_bar = DailyBar.from_gm_bar(symbol, gm_bar)
+            >>> sync.sync_bar(daily_bar)
+
+            # 向后兼容: 直接传 Bar 对象
             >>> def on_bar(context, bars):
             ...     for bar in bars:
-            ...         context.sync.sync_bar(bar.symbol, bar)
+            ...         context.sync.sync_bar(bar)
         """
+        from quantcli.models.bar import DailyBar
+
         conn = self._mysql._get_connection()
         table = self._get_daily_table()
 
         try:
-            # 提取 bar 数据（支持对象和字典）
-            if hasattr(bar, 'eob'):
-                # Bar 对象
-                eob = bar.eob
-                trade_date = eob.date() if isinstance(eob, datetime) else eob
-                open_ = bar.open
-                high = bar.high
-                low = bar.low
-                close = bar.close
-                volume = bar.volume
-                amount = getattr(bar, 'amount', 0)
+            # 转换为 DailyBar
+            if isinstance(bar, DailyBar):
+                daily_bar = bar
+            elif hasattr(bar, 'eob'):
+                # gm.api.Bar 对象
+                daily_bar = DailyBar.from_gm_bar(bar.symbol, bar)
             else:
-                # 字典
-                eob = bar.get('eob')
-                if isinstance(eob, str):
-                    eob = datetime.fromisoformat(eob.replace('Z', '+08:00'))
-                trade_date = eob.date() if isinstance(eob, datetime) else eob
-                open_ = bar.get('open')
-                high = bar.get('high')
-                low = bar.get('low')
-                close = bar.get('close')
-                volume = bar.get('volume', 0)
-                amount = bar.get('amount', 0)
+                # 字典格式
+                symbol = bar.get('symbol', '')
+                daily_bar = DailyBar.from_dict(symbol, bar)
 
             with conn.cursor() as cursor:
                 cursor.execute(f"""
@@ -415,69 +436,51 @@ class GmSync:
                     close = VALUES(close),
                     volume = VALUES(volume),
                     amount = VALUES(amount)
-                """, (
-                    symbol,
-                    trade_date,
-                    open_,
-                    high,
-                    low,
-                    close,
-                    volume,
-                    amount
-                ))
+                """, daily_bar.to_mysql_row())
             return True
 
         except Exception as e:
-            logger.error(f"sync_bar failed for {symbol}: {e}")
+            logger.error(f"sync_bar failed: {e}")
             return False
 
-    def sync_minute_bar(self, symbol: str, bar, period: str = "5") -> bool:
+    def sync_minute_bar(self, bar) -> bool:
         """同步单根分钟线 bar 到 MySQL
 
-        用于 on_bar 事件中实时同步分钟数据。
+        支持 MinuteBar dataclass 或 gm.api.Bar 对象（向后兼容）。
 
         Args:
-            symbol: 股票代码
-            bar: gm.api.Bar 对象或字典
-            period: 分钟周期 ("1", "5", "15", "30", "60")
+            bar: MinuteBar dataclass 或 gm.api.Bar 对象
 
         Returns:
             是否成功
 
         使用示例:
+            # 推荐: 使用 MinuteBar
+            >>> from quantcli.models.bar import MinuteBar
+            >>> minute_bar = MinuteBar.from_gm_bar(symbol, gm_bar, period="5")
+            >>> sync.sync_minute_bar(minute_bar)
+
+            # 向后兼容: 直接传 Bar 对象
             >>> def on_bar(context, bars):
             ...     for bar in bars:
-            ...         context.sync.sync_minute_bar(bar.symbol, bar, period="5")
+            ...         context.sync.sync_minute_bar(bar)
         """
+        from quantcli.models.bar import MinuteBar
+
         conn = self._mysql._get_connection()
         table = self._get_minute_table()
 
         try:
-            # 提取 bar 数据
-            if hasattr(bar, 'eob'):
-                eob = bar.eob
-                if isinstance(eob, str):
-                    eob = datetime.fromisoformat(eob.replace('Z', '+08:00'))
-                trade_date = eob.date()
-                trade_time = eob.time()
-                open_ = bar.open
-                high = bar.high
-                low = bar.low
-                close = bar.close
-                volume = bar.volume
-                amount = getattr(bar, 'amount', 0)
+            # 转换为 MinuteBar
+            if isinstance(bar, MinuteBar):
+                minute_bar = bar
+            elif hasattr(bar, 'eob'):
+                # gm.api.Bar 对象
+                minute_bar = MinuteBar.from_gm_bar(bar.symbol, bar, bar.period if hasattr(bar, 'period') else "5")
             else:
-                eob = bar.get('eob')
-                if isinstance(eob, str):
-                    eob = datetime.fromisoformat(eob.replace('Z', '+08:00'))
-                trade_date = eob.date()
-                trade_time = eob.time()
-                open_ = bar.get('open')
-                high = bar.get('high')
-                low = bar.get('low')
-                close = bar.get('close')
-                volume = bar.get('volume', 0)
-                amount = bar.get('amount', 0)
+                # 字典格式
+                symbol = bar.get('symbol', '')
+                minute_bar = MinuteBar.from_dict(symbol, bar, bar.get('period', "5"))
 
             with conn.cursor() as cursor:
                 cursor.execute(f"""
@@ -491,20 +494,9 @@ class GmSync:
                     close = VALUES(close),
                     volume = VALUES(volume),
                     amount = VALUES(amount)
-                """, (
-                    symbol,
-                    trade_date,
-                    trade_time,
-                    period,
-                    open_,
-                    high,
-                    low,
-                    close,
-                    volume,
-                    amount
-                ))
+                """, minute_bar.to_mysql_row())
             return True
 
         except Exception as e:
-            logger.error(f"sync_minute_bar failed for {symbol}: {e}")
+            logger.error(f"sync_minute_bar failed: {e}")
             return False
