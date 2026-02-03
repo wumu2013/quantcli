@@ -115,6 +115,7 @@ class TestGmSyncBar:
 
             # 创建 mock Bar 对象
             mock_bar = Mock()
+            mock_bar.symbol = "SHSE.600519"
             mock_bar.eob = datetime(2024, 1, 15, 15, 0, 0)
             mock_bar.open = 100.0
             mock_bar.high = 102.0
@@ -123,7 +124,8 @@ class TestGmSyncBar:
             mock_bar.volume = 1000000
             mock_bar.amount = 100000000.0
 
-            result = sync.sync_bar("SHSE.600519", mock_bar)
+            # 新 API: sync_bar(bar)，不再需要 symbol 参数
+            result = sync.sync_bar(mock_bar)
 
             assert result is True
             mock_cursor.execute.assert_called_once()
@@ -143,7 +145,9 @@ class TestGmSyncBar:
             from quantcli.datasources.sync.gm import GmSync
             sync = GmSync()
 
+            # 字典需要包含 symbol
             bar_dict = {
+                'symbol': '600519',
                 'eob': '2024-01-15T15:00:00',
                 'open': 100.0,
                 'high': 102.0,
@@ -153,7 +157,8 @@ class TestGmSyncBar:
                 'amount': 100000000.0
             }
 
-            result = sync.sync_bar("600519", bar_dict)
+            # 新 API: sync_bar(bar_dict)
+            result = sync.sync_bar(bar_dict)
 
             assert result is True
 
@@ -174,6 +179,7 @@ class TestGmSyncBar:
             sync = GmSync()
 
             mock_bar = Mock()
+            mock_bar.symbol = "600519"
             mock_bar.eob = datetime(2024, 1, 15, 15, 0, 0)
             mock_bar.open = 100.0
             mock_bar.high = 102.0
@@ -182,7 +188,8 @@ class TestGmSyncBar:
             mock_bar.volume = 1000000
             mock_bar.amount = 0
 
-            result = sync.sync_bar("600519", mock_bar)
+            # 新 API: sync_bar(bar)
+            result = sync.sync_bar(mock_bar)
 
             assert result is False
 
@@ -206,6 +213,7 @@ class TestGmSyncMinuteBar:
             sync = GmSync()
 
             mock_bar = Mock()
+            mock_bar.symbol = "600519"
             mock_bar.eob = datetime(2024, 1, 15, 14, 30, 0)
             mock_bar.open = 100.0
             mock_bar.high = 102.0
@@ -213,8 +221,10 @@ class TestGmSyncMinuteBar:
             mock_bar.close = 101.0
             mock_bar.volume = 10000
             mock_bar.amount = 1000000.0
+            mock_bar.period = "5"
 
-            result = sync.sync_minute_bar("600519", mock_bar, period="5")
+            # 新 API: sync_minute_bar(bar)
+            result = sync.sync_minute_bar(mock_bar)
 
             assert result is True
 
