@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#0E7D3B"/>
+  <circle cx="100" cy="100" r="80" fill="white"/>
+  <path d="M60 120 Q60 70 100 70 Q140 70 140 120 L140 135 L60 135 Z" fill="#E63946"/>
+  <ellipse cx="45" cy="90" rx="15" ry="10" fill="#E63946"/>
+  <ellipse cx="155" cy="90" rx="15" ry="10" fill="#E63946"/>
+  <text x="100" y="118" font-family="Arial, sans-serif" font-size="50" font-weight="bold" fill="white" text-anchor="middle">Q</text>
+</svg>
