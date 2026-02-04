@@ -52,7 +52,7 @@ QuantCLI provides a **Claude Code Skill** for AI agents to help users create mul
 
 ### Download Skill
 
-**[Download skill.md](https://raw.githubusercontent.com/wumo2013/quantcli/main/docs/skill.md)** - Claude Code Skill file for multi-factor strategy creation
+**[Download skill.md](https://raw.githubusercontent.com/wumu2013/quantcli/main/docs/skill.md)** - Claude Code Skill file for multi-factor strategy creation
 
 ### Install Skill
 

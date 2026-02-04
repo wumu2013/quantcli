@@ -2,8 +2,9 @@
 name: multi-factor-strategy
 version: 1.4.0
 description: Guide users to create multi-factor stock selection strategies and generate independent YAML configuration files
+metadata: {"homepage":"https://make.datavoid.fun/quantcli/","user-invocable":true}
 ---
-{"homepage":"https://github.com/wumu2013/quantcli","user-invocable":true}
+
 
 # Multi-Factor Strategy Assistant
 
